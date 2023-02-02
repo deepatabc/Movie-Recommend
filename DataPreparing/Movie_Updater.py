@@ -28,6 +28,17 @@ if API_KEY is None:
 
 #################################### Generating Dataset ######################################
 
+def tmdb_hit_issue():
+    try:
+        movie_id = 785084
+        response = requests.get('https://api.themoviedb.org/3/movie/{}?api_key={}'.format(movie_id,tmdb.api_key))
+        response.raise_for_status()
+        data_json = response.json()
+        if data_json['genres']:
+            print('just hitting to avoid tmdb issue')
+    except Exception as e:
+        print(e)
+
 def get_genre(x):
     try:
         genres = []
@@ -86,6 +97,11 @@ try:
             df4 = pd.read_html(link, header=0)[5]
             # Merging all the data's
             df = df1.append(df2.append(df3.append(df4,ignore_index=True),ignore_index=True),ignore_index=True)
+            # To avoid tmdb issue
+            n = 0
+            while n<= 5:
+                 tmdb_hit_issue()
+                 n += 1
             print("before Calling TMDB Function")
             # here collecting the Genres of the Movies using the Title that we have got from the Wikipedia
             df['genres'] = df['Title'].map(lambda x: get_genre(str(x)))
@@ -117,7 +133,7 @@ try:
             # Our S3 Updated Data
             updated_data = s3_updated_dataset()
             print(f"Before Updating : {updated_data.shape}")
-            print('outside :')
+            # print('outside :')
             if updated_data is not None:
                 print('inside : checking new updates working or not')
                 # Appending old Update data with new Dataset Generated 
@@ -127,7 +143,7 @@ try:
                 # dropping the duplicate values
                 new_data.drop_duplicates(subset ="movie_title", keep = 'last', inplace = True)
                 print('after dropping items')
-                # after update S3 dataset
+                # before update S3 dataset
                 new_data.to_csv(file_path+file_name,index=False) # keep the data in local storage
                 uploaded = Trigger_Uploader(file_path=file_path,file_name=file_name)
                 print('after s3 triggered')
