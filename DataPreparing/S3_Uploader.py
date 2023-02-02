@@ -34,7 +34,7 @@ try:
                                                   bucket=bucket_name,
                                                   s3_file=f"{file_path}{file_name}")
             if uploaded == True:
-                print('Uploaded to S3 bucket')
+                return "Uploaded to S3 bucket"
         else:
             raise Exception("Keys are missing or not reading from .env")
 except Exception as e:
