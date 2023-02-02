@@ -29,19 +29,22 @@ if API_KEY is None:
 #################################### Generating Dataset ######################################
 
 def get_genre(x):
-    genres = []
-    result = tmdb_movie.search(x)
-    movie_id = result[0].id
-    print(movie_id)
-    response = requests.get('https://api.themoviedb.org/3/movie/{}?api_key={}'.format(movie_id,tmdb.api_key))
-    data_json = response.json()
-    if data_json['genres']:
-        genre_str = " " 
-        for i in range(0,len(data_json['genres'])):
-            genres.append(data_json['genres'][i]['name'])
-        return genre_str.join(genres)
-    else:
-        np.NaN
+    try:
+        genres = []
+        result = tmdb_movie.search(x)
+        movie_id = result[0].id
+        response = requests.get('https://api.themoviedb.org/3/movie/{}?api_key={}'.format(movie_id,tmdb.api_key))
+        response.raise_for_status()
+        data_json = response.json()
+        if data_json['genres']:
+            genre_str = " " 
+            for i in range(0,len(data_json['genres'])):
+                genres.append(data_json['genres'][i]['name'])
+            return genre_str.join(genres)
+        else:
+            np.NaN
+    except:
+        raise Exception("TMDB is having some issues!")
         
 def get_director(x):
     if " (director)" in x:
@@ -84,11 +87,8 @@ try:
             # Merging all the data's
             df = df1.append(df2.append(df3.append(df4,ignore_index=True),ignore_index=True),ignore_index=True)
             print("before Calling TMDB Function")
-            try:
-                # here collecting the Genres of the Movies using the Title that we have got from the Wikipedia
-                df['genres'] = df['Title'].map(lambda x: get_genre(str(x)))
-            except:
-                raise Exception("TMDB is having some issues!")
+            # here collecting the Genres of the Movies using the Title that we have got from the Wikipedia
+            df['genres'] = df['Title'].map(lambda x: get_genre(str(x)))
             print("After Done TMDB Function")
             # Extracting the Features 
             df_new = df[['Title','Cast and crew','genres']]
@@ -117,20 +117,24 @@ try:
             # Our S3 Updated Data
             updated_data = s3_updated_dataset()
             print(f"Before Updating : {updated_data.shape}")
-            if updated_data:
+            print('outside :')
+            if updated_data is not None:
+                print('inside : checking new updates working or not')
                 # Appending old Update data with new Dataset Generated 
                 new_data = pd.concat([updated_data,new_df])
                 # If any NA values are present, drop that row or column
                 new_data = new_data.dropna(how='any')
                 # dropping the duplicate values
                 new_data.drop_duplicates(subset ="movie_title", keep = 'last', inplace = True)
+                print('after dropping items')
                 # after update S3 dataset
                 new_data.to_csv(file_path+file_name,index=False) # keep the data in local storage
                 uploaded = Trigger_Uploader(file_path=file_path,file_name=file_name)
+                print('after s3 triggered')
                 if uploaded == "Uploaded to S3 bucket":
                     print(uploaded)
                     after_updated_data = s3_updated_dataset()
-                    print(f"Before Updating : {after_updated_data.shape}")
+                    print(f"After Updating : {after_updated_data.shape}")
             else:
                 raise Exception("UpdateData not getting from S3")
         else:
