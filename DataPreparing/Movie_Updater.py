@@ -1,14 +1,12 @@
 #################################### IMPORTING LIBRARIES #####################################
 import pandas as pd
 import numpy as np
-import json
 import os
 import requests
-import boto3
-from botocore.exceptions import NoCredentialsError
 from tmdbv3api import TMDb
 from tmdbv3api import Movie
 from S3_Uploader import Trigger_Uploader #S3 Trigger function calling.
+from datetime import datetime
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -20,42 +18,27 @@ tmdb_movie = Movie()
 tmdb.api_key = API_KEY
 file_path = 'PreparedData/'
 file_name = "UpdatedDataSet.csv"
-
-if API_KEY is None:
-    print("API_KEY is not Getting")
-    
-
+list_of_months = {'1': 'January', '2': 'February', '3': 'March',
+                   '4': 'April', '5': 'May', '6': 'June', '7': 'July',
+                   '8': 'August', '9': 'September', '10': 'October',
+                   '11': 'November', '12': 'December'}
 
 #################################### Generating Dataset ######################################
 
-def tmdb_hit_issue():
-    try:
-        movie_id = 785084
-        response = requests.get('https://api.themoviedb.org/3/movie/{}?api_key={}'.format(movie_id,tmdb.api_key))
-        response.raise_for_status()
-        data_json = response.json()
-        if data_json['genres']:
-            print('just hitting to avoid tmdb issue')
-    except Exception as e:
-        print(e)
-
 def get_genre(x):
-    try:
-        genres = []
-        result = tmdb_movie.search(x)
+    genres = []
+    result = tmdb_movie.search(x)
+    if result:
         movie_id = result[0].id
         response = requests.get('https://api.themoviedb.org/3/movie/{}?api_key={}'.format(movie_id,tmdb.api_key))
-        response.raise_for_status()
         data_json = response.json()
         if data_json['genres']:
             genre_str = " " 
             for i in range(0,len(data_json['genres'])):
                 genres.append(data_json['genres'][i]['name'])
             return genre_str.join(genres)
-        else:
-            np.NaN
-    except:
-        raise Exception("TMDB is having some issues!")
+    else:
+        np.NaN
         
 def get_director(x):
     if " (director)" in x:
@@ -87,21 +70,20 @@ def s3_updated_dataset():
     return data
 
 try:
+    if API_KEY is None:
+        raise Exception("API_KEY is not Getting")
     def make_new_dataset(country,year):
-        link = f"https://en.wikipedia.org/wiki/List_of_{country.capitalize()}_films_of_{year}"
-        # print(link)
-        if link:
+        current_year = datetime.today().year
+        if current_year != year:
+            link = f"https://en.wikipedia.org/wiki/List_of_{country.capitalize()}_films_of_{year}"
             df1 = pd.read_html(link, header=0)[2]
             df2 = pd.read_html(link, header=0)[3]
             df3 = pd.read_html(link, header=0)[4]
             df4 = pd.read_html(link, header=0)[5]
             # Merging all the data's
             df = df1.append(df2.append(df3.append(df4,ignore_index=True),ignore_index=True),ignore_index=True)
+            # df = pd.concat([df1,df2,df3,df4])
             # To avoid tmdb issue
-            n = 0
-            while n<= 5:
-                 tmdb_hit_issue()
-                 n += 1
             print("before Calling TMDB Function")
             # here collecting the Genres of the Movies using the Title that we have got from the Wikipedia
             df['genres'] = df['Title'].map(lambda x: get_genre(str(x)))
@@ -133,9 +115,7 @@ try:
             # Our S3 Updated Data
             updated_data = s3_updated_dataset()
             print(f"Before Updating : {updated_data.shape}")
-            # print('outside :')
             if updated_data is not None:
-                print('inside : checking new updates working or not')
                 # Appending old Update data with new Dataset Generated 
                 new_data = pd.concat([updated_data,new_df])
                 # If any NA values are present, drop that row or column
@@ -148,18 +128,32 @@ try:
                 uploaded = Trigger_Uploader(file_path=file_path,file_name=file_name)
                 print('after s3 triggered')
                 if uploaded == "Uploaded to S3 bucket":
-                    print(uploaded)
                     after_updated_data = s3_updated_dataset()
                     print(f"After Updating : {after_updated_data.shape}")
             else:
                 raise Exception("UpdateData not getting from S3")
         else:
-            raise Exception("Wikipedia Link is getting Error")
+            current_month = datetime.today().month
+            current_month = list_of_months[str(current_month)].upper()
+            print(current_month)
+            link = f"https://en.wikipedia.org/wiki/List_of_{country.capitalize()}_films_of_{year}"
+            df1 = pd.read_html(link, header=0)[2]
+            # for data in df1:
+            #     print(data['Opening'])
+            # print(df1)
+            df2 = pd.read_html(link, header=0)[3]
+            # print(df2)
+            for data in df2:
+                print(data)
+            df3 = pd.read_html(link, header=0)[4]
+            df4 = pd.read_html(link, header=0)[5]
+            # raise Exception("Wikipedia Link is getting Error")
 except Exception as e:
     print(e)
     
-
-# if __name__ == "__main__":
-#     make_new_dataset(country=country,year=year)
-#     print("done")
+if __name__ == '__main__':
+    country = "American"
+    year = 2020
+    make_new_dataset(country=country,year=year)
+    print("done")
     
