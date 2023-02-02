@@ -1,0 +1,6 @@
+boto3
+python-dotenv
+lxml
+pandas
+numpy
+tmdbv3api
