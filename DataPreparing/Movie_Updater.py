@@ -109,7 +109,6 @@ def preprocess_data(df):
             # before update S3 dataset
             new_data.to_csv(file_path+file_name,index=False) # keep the data in local storage
             uploaded = Trigger_Uploader(file_path=file_path,file_name=file_name)
-            print('after s3 triggered')
             if uploaded == "Uploaded to S3 bucket":
                 after_updated_data = s3_updated_dataset()
                 print(f"After Updating : {after_updated_data.shape}")
@@ -138,10 +137,8 @@ try:
             # now passing values to the wikipedia scrapper function
             df = wikipedia_data_scrapper(country,year)
             # To avoid tmdb issue
-            print("before Calling TMDB Function")
             # here collecting the Genres of the Movies using the Title that we have got from the Wikipedia
             df['genres'] = df['Title'].map(lambda x: get_genre(str(x)))
-            print("After Done TMDB Function")
             # Calling Data preprocessing function
             preprocess_data(df)
         else:
@@ -149,7 +146,6 @@ try:
             # now passing values to the wikipedia scrapper function
             df = wikipedia_data_scrapper(country,year)
             df['new_data'] = df['Opening'].map(lambda x: str(x))
-            print("before Calling TMDB Function")
             # here collecting the Genres of the Movies using the Title that we have got from the Wikipedia
             for i in range(len(df['new_data'])):
                 month = df['new_data'][i]
@@ -158,7 +154,6 @@ try:
                 if month == current_month:
                     if current_month != df['new_data'][i + 1]:
                         break
-            print("After Done TMDB Function")
             # Calling Data preprocessing function
             preprocess_data(df)
 except Exception as e:
