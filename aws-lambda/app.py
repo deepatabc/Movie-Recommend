@@ -3,8 +3,6 @@ import pandas as pd
 import numpy as np
 import os
 import requests
-from tmdbv3api import TMDb
-from tmdbv3api import Movie
 from S3_Uploader import Trigger_Uploader
 from datetime import datetime
 from dotenv import load_dotenv
@@ -12,10 +10,7 @@ load_dotenv()
 
 #################################### CONFIGURATIONS ##########################################
 
-API_KEY = os.environ.get('TMBD_API_KEY')
-tmdb = TMDb()
-tmdb_movie = Movie()
-tmdb.api_key = API_KEY
+TMBD_API_KEY = os.environ.get('TMBD_API_KEY')
 file_path = 'PreparedData/'
 file_name = "UpdatedDataSet.csv"
 list_of_months = {'1': 'January', '2': 'February', '3': 'March',
@@ -38,11 +33,12 @@ def get_genre(x):
         2. Collecting Genres from TMDB 
     """
     genres = []
-    result = tmdb_movie.search(x)
-    if result:
-        movie_id = result[0].id
+    result = requests.get(f"https://api.themoviedb.org/3/search/movie?api_key={TMBD_API_KEY}&query={x}")
+    movie_json = result.json()
+    if movie_json['results'][0]['id']:
+        movie_id = movie_json['results'][0]['id']
         response = requests.get(
-            'https://api.themoviedb.org/3/movie/{}?api_key={}'.format(movie_id, tmdb.api_key))
+            'https://api.themoviedb.org/3/movie/{}?api_key={}'.format(movie_id, TMBD_API_KEY))
         data_json = response.json()
         print(movie_id)
         if data_json['genres']:
@@ -156,8 +152,8 @@ def wikipedia_data_scrapper(country, year):
 
 
 try:
-    if API_KEY is None:
-        raise Exception("API_KEY is not Getting")
+    if TMBD_API_KEY is None:
+        raise Exception("TMBD_API_KEY is not Getting")
 
     def make_new_dataset(country, year):
         """
