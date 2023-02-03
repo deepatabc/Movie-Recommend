@@ -181,6 +181,6 @@ except Exception as e:
 
 if __name__ == '__main__':
     country = "American"
-    year = 2022
+    year = datetime.today().year #to do cronjob just changed the year to current_year
     make_new_dataset(country=country, year=year)
     print(f"done :{year} dataset updated")
