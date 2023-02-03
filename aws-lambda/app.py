@@ -25,6 +25,12 @@ list_of_months = {'1': 'January', '2': 'February', '3': 'March',
 
 #################################### Generating Dataset ######################################
 
+def lambda_handler(event, context):
+    print("AWS! base function to trigger checking")
+    print("event = {}".format(event))
+    return {
+        'statusCode': 200,
+    }
 
 def get_genre(x):
     """
@@ -38,6 +44,7 @@ def get_genre(x):
         response = requests.get(
             'https://api.themoviedb.org/3/movie/{}?api_key={}'.format(movie_id, tmdb.api_key))
         data_json = response.json()
+        print(movie_id)
         if data_json['genres']:
             genre_str = " "
             for i in range(0, len(data_json['genres'])):
@@ -179,8 +186,9 @@ try:
 except Exception as e:
     print(e)
 
-if __name__ == '__main__':
-    country = "American"
-    year = datetime.today().year #to do cronjob just changed the year to current_year
-    make_new_dataset(country=country, year=year)
-    print(f"done :{year} dataset updated")
+
+country = "American"
+print("file Executing..!")
+year = datetime.today().year #to do cronjob just changed the year to current_year
+make_new_dataset(country=country, year=year)
+print(f"done :{year} dataset updated")
