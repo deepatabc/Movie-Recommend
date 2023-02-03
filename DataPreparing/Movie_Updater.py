@@ -132,29 +132,27 @@ try:
     if API_KEY is None:
         raise Exception("API_KEY is not Getting")
     def make_new_dataset(country,year):
+        """
+            1. Scrapping Movies Title from Wikipedia
+            2. Collecting Genres from TMDB Using API
+            3. Calling Preprocess Function to Make a new Dataset What we have created before and update to it.
+            4. Same process happening on else part too but putting some condition to stop taking movies title after the current month
+        """
         current_year = datetime.today().year
         if current_year != year:
-            # now passing values to the wikipedia scrapper function
             df = wikipedia_data_scrapper(country,year)
-            # To avoid tmdb issue
-            # here collecting the Genres of the Movies using the Title that we have got from the Wikipedia
             df['genres'] = df['Title'].map(lambda x: get_genre(str(x)))
-            # Calling Data preprocessing function
             preprocess_data(df)
         else:
             current_month = " ".join(list_of_months[str(datetime.today().month)].upper())
-            # now passing values to the wikipedia scrapper function
             df = wikipedia_data_scrapper(country,year)
             df['new_data'] = df['Opening'].map(lambda x: str(x))
-            # here collecting the Genres of the Movies using the Title that we have got from the Wikipedia
             for i in range(len(df['new_data'])):
                 month = df['new_data'][i]
                 df['genres'] = df['Title'].map(lambda x: get_genre(str(x)))
-                # here this condition will take a break from searching movies
                 if month == current_month:
                     if current_month != df['new_data'][i + 1]:
                         break
-            # Calling Data preprocessing function
             preprocess_data(df)
 except Exception as e:
     print(e)
