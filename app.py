@@ -78,9 +78,11 @@ def get_recommended_movies(movie_name):
     if movie_name not in data['movie_title'].unique():
         return ('Sorry! The movie you requested is not in our database. Please check the spelling or try with some other movies')
     else:
-        i = data.loc[data['movie_title'] == movie_name].index[0] # to get the exact movie
-        similarity_score = list(enumerate(similarity[i])) # similarity taking
-        sorted_similarity_movies = sorted(similarity_score, key=lambda x: x[1], reverse=True)
+        # to get the exact movie
+        i = data.loc[data['movie_title'] == movie_name].index[0]
+        similarity_score = list(enumerate(similarity[i]))  # similarity taking
+        sorted_similarity_movies = sorted(
+            similarity_score, key=lambda x: x[1], reverse=True)
         # excluding first item since it is the requested movie itself
         sorted_similarity_movies = sorted_similarity_movies[1:11]
         titles = []
@@ -95,22 +97,41 @@ def similar_movies(title):
     return similar_movies
 
 
-@app.post("/api/movieDetails")
-async def getMovieDetails(movie_details: Request):
+@app.post("/api/movie")
+async def get_movie_name(movie_details: Request):
     try:
         collected_data = await movie_details.json()
         movie_title = collected_data['movie_title']
-        movie_details = get_details(movie_title)
-        similar_mv = similar_movies(movie_details['movie_title'])
+        movie_exist = get_details(movie_title)
+        # similar_mv = similar_movies(movie_details['movie_title'])
         return {
             "status": status.HTTP_200_OK,
             "results": {
-                "searched_movie": movie_details,
-                "similar_movies" : similar_mv
+                "searched_movie": movie_exist,
+                # "similar_movies" : similar_mv
             }
         }
     except Exception as e:
         return {
-            "status": status.HTTP_409_CONFLICT,
+            "status": status.HTTP_404_NOT_FOUND,
+            'message': str(e)
+        }
+
+
+@app.get("/api/movie/{movie_id}")
+async def get_movie_details(movie_id: int):
+    try:
+        url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={TMBD_API_KEY}"
+        response = requests.get(url)
+        movie_details = response.json()
+        return {
+            "status": status.HTTP_200_OK,
+            "results": {
+                "movie_details": movie_details
+            }
+        }
+    except Exception as e:
+        return {
+            "status": status.HTTP_404_NOT_FOUND,
             'message': str(e)
         }
