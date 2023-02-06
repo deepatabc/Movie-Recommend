@@ -116,6 +116,19 @@ async def get_movie_name(movie_details: Request):
             "status": status.HTTP_404_NOT_FOUND,
             'message': str(e)
         }
+        
+# if(runtime%60==0){
+#     runtime = Math.floor(runtime/60)+" hour(s)"
+#   }
+#   else {
+#     runtime = Math.floor(runtime/60)+" hour(s) "+(runtime%60)+" min(s)"
+#   }
+
+def get_runtime(runtime):
+    if runtime % 60 == 0:
+        runtime = str(round(runtime/60))+" hour(s)"
+    else:
+        runtime = str(round(runtime/60))+" hour(s) "+str(runtime%60)+" min(s)"
 
 
 @app.get("/api/movie/{movie_id}")
@@ -124,10 +137,22 @@ async def get_movie_details(movie_id: int):
         url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={TMBD_API_KEY}"
         response = requests.get(url)
         movie_details = response.json()
+        poster_url = f"https://image.tmdb.org/t/p/original{movie_details['poster_path']}"
+        genres_list = ", ".join([data['name'] for data in movie_details['genres']])
+        runtime = get_runtime(movie_details['runtime'])
         return {
             "status": status.HTTP_200_OK,
             "results": {
-                "movie_details": movie_details
+                "movie_id" : movie_id,
+                "movie_title" : movie_details['original_title'],
+                "imdb_id" : movie_details['imdb_id'],
+                "poster" : poster_url,
+                "overview" : movie_details['overview'],
+                "genres" :  genres_list,
+                "rating" : movie_details['vote_average'],
+                "vote_count" : movie_details['vote_count'],
+                "release_date" : movie_details['release_date'],
+                "runtime" : runtime
             }
         }
     except Exception as e:
