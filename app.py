@@ -116,23 +116,17 @@ async def get_movie_name(movie_details: Request):
             "status": status.HTTP_404_NOT_FOUND,
             'message': str(e)
         }
-        
-# if(runtime%60==0){
-#     runtime = Math.floor(runtime/60)+" hour(s)"
-#   }
-#   else {
-#     runtime = Math.floor(runtime/60)+" hour(s) "+(runtime%60)+" min(s)"
-#   }
 
 def get_runtime(runtime):
     if runtime % 60 == 0:
         runtime = str(round(runtime/60))+" hour(s)"
+        return runtime
     else:
         runtime = str(round(runtime/60))+" hour(s) "+str(runtime%60)+" min(s)"
-
+        return runtime
 
 @app.get("/api/movie/{movie_id}")
-async def get_movie_details(movie_id: int):
+def get_movie_details(movie_id: int):
     try:
         url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={TMBD_API_KEY}"
         response = requests.get(url)
