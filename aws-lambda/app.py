@@ -35,7 +35,6 @@ def get_genre(x):
             1. Here Searching the Movie Titles what we have got from Wikipedia
             2. Collecting Genres from TMDB 
         """
-        # print(x)
         genres = []
         result = requests.get(
             f"https://api.themoviedb.org/3/search/movie?api_key={TMBD_API_KEY}&query={x}")
@@ -179,19 +178,23 @@ try:
             current_month = " ".join(
                 list_of_months[str(datetime.today().month)].upper())
             df = wikipedia_data_scrapper(country, year)
-            df['new_data'] = df['Opening'].map(lambda x: str(x))
-            # print(f"df['new_data'] : {df['new_data']} length : {len(df['new_data'])}")
-            for i in range(len(df['new_data'])):
-                month = df['new_data'][i]
-                print(month)
+            last_number = 0
+            collected_genres = []
+            for i in range(len(df['Opening'])):
+                data = get_genre(df['Title'][i])
+                print(i,data)
+                collected_genres.append(data)
+                month = df['Opening'][i]
                 if month == current_month:
-                    if current_month != df['new_data'][i + 1]:
-                        print(f"testing break{df['new_data'][i + 1]}")
+                    if i + 1 >= len(df['Opening']):
                         break
-                else:
-                    pass
-                    # df['genres'] = df['Title'].map(lambda x: get_genre(str(x)))
-            # preprocess_data(df)
+                    elif current_month != df['Opening'][i + 1]:
+                        last_number = i + 1
+                        break
+            if last_number != 0:
+                df = df.drop(df.index[last_number :])
+            df['genres'] = collected_genres # assigning after drop to avoid index error
+            preprocess_data(df)
 except Exception as e:
     print(e)
 
