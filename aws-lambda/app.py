@@ -20,6 +20,7 @@ list_of_months = {'1': 'January', '2': 'February', '3': 'March',
 
 #################################### Generating Dataset ######################################
 
+
 def lambda_handler(event, context):
     print("AWS! base function to trigger checking")
     print("event = {}".format(event))
@@ -27,27 +28,33 @@ def lambda_handler(event, context):
         'statusCode': 200,
     }
 
+
 def get_genre(x):
-    """
-        1. Here Searching the Movie Titles what we have got from Wikipedia
-        2. Collecting Genres from TMDB 
-    """
-    genres = []
-    result = requests.get(f"https://api.themoviedb.org/3/search/movie?api_key={TMBD_API_KEY}&query={x}")
-    movie_json = result.json()
-    if movie_json['results'][0]['id']:
-        movie_id = movie_json['results'][0]['id']
-        response = requests.get(
-            'https://api.themoviedb.org/3/movie/{}?api_key={}'.format(movie_id, TMBD_API_KEY))
-        data_json = response.json()
-        print(movie_id)
-        if data_json['genres']:
-            genre_str = " "
-            for i in range(0, len(data_json['genres'])):
-                genres.append(data_json['genres'][i]['name'])
-            return genre_str.join(genres)
-    else:
-        np.NaN
+    try:
+        """
+            1. Here Searching the Movie Titles what we have got from Wikipedia
+            2. Collecting Genres from TMDB 
+        """
+        # print(x)
+        genres = []
+        result = requests.get(
+            f"https://api.themoviedb.org/3/search/movie?api_key={TMBD_API_KEY}&query={x}")
+        movie_json = result.json()
+        if movie_json['results'][0]['id']:
+            movie_id = movie_json['results'][0]['id']
+            response = requests.get(
+                'https://api.themoviedb.org/3/movie/{}?api_key={}'.format(movie_id, TMBD_API_KEY))
+            data_json = response.json()
+            # print(movie_id)
+            if data_json['genres']:
+                genre_str = " "
+                for i in range(0, len(data_json['genres'])):
+                    genres.append(data_json['genres'][i]['name'])
+                return genre_str.join(genres)
+        else:
+            np.NaN
+    except Exception as e:
+        return str(e)
 
 
 def get_director(x):
@@ -146,6 +153,7 @@ def wikipedia_data_scrapper(country, year):
     df2 = pd.read_html(link, header=0)[3]
     df3 = pd.read_html(link, header=0)[4]
     df4 = pd.read_html(link, header=0)[5]
+    df4 = pd.read_html(link, header=0)[6]
     df = df1.append(df2.append(df3.append(df4, ignore_index=True),
                     ignore_index=True), ignore_index=True)
     return df
@@ -172,19 +180,24 @@ try:
                 list_of_months[str(datetime.today().month)].upper())
             df = wikipedia_data_scrapper(country, year)
             df['new_data'] = df['Opening'].map(lambda x: str(x))
+            # print(f"df['new_data'] : {df['new_data']} length : {len(df['new_data'])}")
             for i in range(len(df['new_data'])):
                 month = df['new_data'][i]
-                df['genres'] = df['Title'].map(lambda x: get_genre(str(x)))
+                print(month)
                 if month == current_month:
                     if current_month != df['new_data'][i + 1]:
+                        print(f"testing break{df['new_data'][i + 1]}")
                         break
-            preprocess_data(df)
+                else:
+                    pass
+                    # df['genres'] = df['Title'].map(lambda x: get_genre(str(x)))
+            # preprocess_data(df)
 except Exception as e:
     print(e)
 
 
 country = "American"
 print("file Executing..!")
-year = datetime.today().year #to do cronjob just changed the year to current_year
+year = datetime.today().year  # to do cronjob just changed the year to current_year
 make_new_dataset(country=country, year=year)
 print(f"done :{year} dataset updated")
