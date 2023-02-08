@@ -125,6 +125,26 @@ def get_runtime(runtime):
         runtime = str(round(runtime/60))+" hour(s) "+str(runtime%60)+" min(s)"
         return runtime
 
+def get_movie_cast(movie_id):
+    try:
+        cast_info = []
+        url = f"https://api.themoviedb.org/3/movie/{movie_id}/credits?api_key={TMBD_API_KEY}"
+        response = requests.get(url)
+        cast_details = response.json()
+        for cast in cast_details['cast']:
+            if cast['known_for_department'] == "Acting":
+                if cast['popularity'] >= 5:
+                    cast_info.append({
+                            "cast_id" : cast['cast_id'],
+                            "name" : cast['name'],
+                            "character" : cast['character'],
+                            "profile_url" : f"https://image.tmdb.org/t/p/original{cast['profile_path']}"
+                        })
+        return cast_info
+    except Exception as e:
+        return str(e)
+    
+
 @app.get("/api/movie/{movie_id}")
 def get_movie_details(movie_id: int):
     try:
@@ -134,6 +154,7 @@ def get_movie_details(movie_id: int):
         poster_url = f"https://image.tmdb.org/t/p/original{movie_details['poster_path']}"
         genres_list = ", ".join([data['name'] for data in movie_details['genres']])
         runtime = get_runtime(movie_details['runtime'])
+        cast_details = get_movie_cast(movie_id)
         return {
             "status": status.HTTP_200_OK,
             "results": {
@@ -146,7 +167,9 @@ def get_movie_details(movie_id: int):
                 "rating" : movie_details['vote_average'],
                 "vote_count" : movie_details['vote_count'],
                 "release_date" : movie_details['release_date'],
-                "runtime" : runtime
+                "runtime" : runtime,
+                "status" : movie_details['status'],
+                "cast_details" : cast_details,
             }
         }
     except Exception as e:
