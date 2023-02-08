@@ -58,6 +58,7 @@ def get_details(movie_title):
 
 
 def create_similarity():
+    # taking the latest data and training each time.
     data = s3_updated_dataset()
     # Convert a collection of text documents to a matrix of token counts
     cv = CountVectorizer()
@@ -103,12 +104,10 @@ async def get_movie_name(movie_details: Request):
         collected_data = await movie_details.json()
         movie_title = collected_data['movie_title']
         movie_exist = get_details(movie_title)
-        # similar_mv = similar_movies(movie_details['movie_title'])
         return {
             "status": status.HTTP_200_OK,
             "results": {
                 "searched_movie": movie_exist,
-                # "similar_movies" : similar_mv
             }
         }
     except Exception as e:
