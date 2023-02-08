@@ -11,7 +11,7 @@ load_dotenv()
 #################################### CONFIGURATIONS ##########################################
 
 TMBD_API_KEY = os.environ.get('TMBD_API_KEY')
-file_path = 'PreparedData/'
+file_path = '/tmp/'
 file_name = "UpdatedDataSet.csv"
 list_of_months = {'1': 'January', '2': 'February', '3': 'March',
                   '4': 'April', '5': 'May', '6': 'June', '7': 'July',
@@ -44,7 +44,6 @@ def get_genre(x):
             response = requests.get(
                 'https://api.themoviedb.org/3/movie/{}?api_key={}'.format(movie_id, TMBD_API_KEY))
             data_json = response.json()
-            # print(movie_id)
             if data_json['genres']:
                 genre_str = " "
                 for i in range(0, len(data_json['genres'])):
@@ -182,7 +181,6 @@ try:
             collected_genres = []
             for i in range(len(df['Opening'])):
                 data = get_genre(df['Title'][i])
-                print(i,data)
                 collected_genres.append(data)
                 month = df['Opening'][i]
                 if month == current_month:

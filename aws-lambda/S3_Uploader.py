@@ -11,6 +11,7 @@ load_dotenv()
 ACCESS_KEY = os.environ.get('ACCESS_KEY')
 SECRET_KEY = os.environ.get('SECRET_KEY')
 bucket_name = os.environ.get('BUCKET_NAME')
+S3_FILE_PATH = "PreparedData/"
 
 #################################### UPLOADING TO S3 BUCKET ####################################
 
@@ -32,7 +33,7 @@ try:
         if ACCESS_KEY is not None:
             uploaded = upload_generated_csv_s3(local_file=os.path.join(file_path, file_name),
                                                   bucket=bucket_name,
-                                                  s3_file=f"{file_path}{file_name}")
+                                                  s3_file=f"{S3_FILE_PATH}{file_name}")
             if uploaded == True:
                 return "Uploaded to S3 bucket"
         else:
