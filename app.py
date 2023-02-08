@@ -135,7 +135,7 @@ def get_movie_cast(movie_id):
             if cast['known_for_department'] == "Acting":
                 if cast['popularity'] >= 5:
                     cast_info.append({
-                            "cast_id" : cast['cast_id'],
+                            "cast_id" : cast['id'],
                             "name" : cast['name'],
                             "character" : cast['character'],
                             "profile_url" : f"https://image.tmdb.org/t/p/original{cast['profile_path']}"
@@ -171,6 +171,36 @@ def get_movie_details(movie_id: int):
                 "status" : movie_details['status'],
                 "cast_details" : cast_details,
             }
+        }
+    except Exception as e:
+        return {
+            "status": status.HTTP_404_NOT_FOUND,
+            'message': str(e)
+        }
+
+def get_individual_cast(cast_id):
+    try:
+        cast_info = {}
+        url = f"https://api.themoviedb.org/3/person/{cast_id}?api_key={TMBD_API_KEY}"
+        response = requests.get(url)
+        cast_details = response.json()
+        cast_info['name'] = cast_details['name']
+        cast_info['biography'] = cast_details['biography']
+        cast_info['birthday'] = cast_details['birthday']
+        cast_info['known_for_department'] = cast_details['known_for_department']
+        cast_info['place_of_birth'] = cast_details['place_of_birth']
+        cast_info['profile_url'] = f"https://image.tmdb.org/t/p/original{cast_details['profile_path']}"
+        return cast_info
+    except Exception as e:
+        return str(e)
+
+@app.get("/api/cast/{cast_id}")
+def get_cast_details(cast_id: int):
+    try:
+        cast_info = get_individual_cast(cast_id)
+        return {
+            "status": status.HTTP_200_OK,
+            "results": cast_info
         }
     except Exception as e:
         return {
