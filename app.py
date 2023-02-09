@@ -67,10 +67,10 @@ def create_similarity():
     return data, similarity
 
 
-def get_recommended_movies(movie_name,number_of_recommended):
+def get_recommended_movies(movie_name, number_of_recommended):
     movie_name = movie_name.lower()
     try:
-        # train the model and get latest similarities 
+        # train the model and get latest similarities
         data, similarity = create_similarity()
     except:
         raise Exception("Similarity Creating Got Failed")
@@ -84,12 +84,14 @@ def get_recommended_movies(movie_name,number_of_recommended):
             similarity_score, key=lambda x: x[1], reverse=True)
         # excluding first item since it is the requested movie itself
         # second range will give you the number of movies.
-        sorted_similarity_movies = sorted_similarity_movies[1:int(number_of_recommended)+1]
+        sorted_similarity_movies = sorted_similarity_movies[1:int(
+            number_of_recommended)+1]
         titles = []
         for i in range(len(sorted_similarity_movies)):
             a = sorted_similarity_movies[i][0]
             titles.append(data['movie_title'][a])
         return titles
+
 
 @app.post("/api/movie")
 async def get_movie_name(movie_details: Request):
@@ -109,13 +111,16 @@ async def get_movie_name(movie_details: Request):
             'message': str(e)
         }
 
+
 def get_runtime(runtime):
     if runtime % 60 == 0:
         runtime = str(round(runtime/60))+" hour(s)"
         return runtime
     else:
-        runtime = str(round(runtime/60))+" hour(s) "+str(runtime%60)+" min(s)"
+        runtime = str(round(runtime/60))+" hour(s) " + \
+            str(runtime % 60)+" min(s)"
         return runtime
+
 
 def get_movie_cast(movie_id):
     try:
@@ -127,65 +132,69 @@ def get_movie_cast(movie_id):
             if cast['known_for_department'] == "Acting":
                 if cast['popularity'] >= 5:
                     cast_info.append({
-                            "cast_id" : cast['id'],
-                            "name" : cast['name'],
-                            "character" : cast['character'],
-                            "profile_url" : f"https://image.tmdb.org/t/p/original{cast['profile_path']}"
-                        })
+                        "cast_id": cast['id'],
+                        "name": cast['name'],
+                        "character": cast['character'],
+                        "profile_url": f"https://image.tmdb.org/t/p/original{cast['profile_path']}"
+                    })
         return cast_info
     except Exception as e:
         return str(e)
-    
+
+
 def get_movies(movie_id):
     try:
         url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={TMBD_API_KEY}"
         response = requests.get(url)
         movie_details = response.json()
         poster_url = f"https://image.tmdb.org/t/p/original{movie_details['poster_path']}"
-        genres_list = ", ".join([data['name'] for data in movie_details['genres']])
+        genres_list = ", ".join([data['name']
+                                for data in movie_details['genres']])
         runtime = get_runtime(movie_details['runtime'])
         return {
-            "movie_id" : movie_id,
-            "movie_title" : movie_details['original_title'],
-            "imdb_id" : movie_details['imdb_id'],
-            "poster" : poster_url,
-            "overview" : movie_details['overview'],
-            "genres" :  genres_list,
-            "rating" : movie_details['vote_average'],
-            "vote_count" : movie_details['vote_count'],
-            "release_date" : movie_details['release_date'],
-            "runtime" : runtime,
-            "status" : movie_details['status'],
+            "movie_id": movie_id,
+            "movie_title": movie_details['original_title'],
+            "imdb_id": movie_details['imdb_id'],
+            "poster": poster_url,
+            "overview": movie_details['overview'],
+            "genres":  genres_list,
+            "rating": movie_details['vote_average'],
+            "vote_count": movie_details['vote_count'],
+            "release_date": movie_details['release_date'],
+            "runtime": runtime,
+            "status": movie_details['status'],
         }
     except Exception as e:
         return str(e)
-    
+
 
 @app.get("/api/movie/{movie_id}/{recommend_count}")
-def get_movie_details(movie_id: int, recommend_count : int):
+def get_movie_details(movie_id: int, recommend_count: int):
     try:
         movie_details = get_movies(movie_id)
         cast_details = get_movie_cast(movie_id)
         number_of_recommended_movies = recommend_count
-        recommended_movies = get_recommended_movies(movie_details['movie_title'],number_of_recommended_movies)
+        recommended_movies = get_recommended_movies(
+            movie_details['movie_title'], number_of_recommended_movies)
         recommended_movies = [get_title(name) for name in recommended_movies]
-        recommended_movies = [get_movies(movie_id['id']) for movie_id in recommended_movies]
+        recommended_movies = [get_movies(movie_id['id'])
+                              for movie_id in recommended_movies]
         return {
             "status": status.HTTP_200_OK,
             "results": {
-                "movie_id" : movie_id,
-                "movie_title" : movie_details['movie_title'],
-                "imdb_id" : movie_details['imdb_id'],
-                "poster" : movie_details['poster'],
-                "overview" : movie_details['overview'],
-                "genres" :  movie_details['genres'],
-                "rating" : movie_details['rating'],
-                "vote_count" : movie_details['vote_count'],
-                "release_date" : movie_details['release_date'],
-                "runtime" : movie_details['runtime'],
-                "status" : movie_details['status'],
-                "cast_details" : cast_details,
-                "recommended_movies" : recommended_movies
+                "movie_id": movie_id,
+                "movie_title": movie_details['movie_title'],
+                "imdb_id": movie_details['imdb_id'],
+                "poster": movie_details['poster'],
+                "overview": movie_details['overview'],
+                "genres":  movie_details['genres'],
+                "rating": movie_details['rating'],
+                "vote_count": movie_details['vote_count'],
+                "release_date": movie_details['release_date'],
+                "runtime": movie_details['runtime'],
+                "status": movie_details['status'],
+                "cast_details": cast_details,
+                "recommended_movies": recommended_movies
             }
         }
     except Exception as e:
@@ -193,6 +202,7 @@ def get_movie_details(movie_id: int, recommend_count : int):
             "status": status.HTTP_404_NOT_FOUND,
             'message': str(e)
         }
+
 
 def get_individual_cast(cast_id):
     try:
@@ -209,6 +219,7 @@ def get_individual_cast(cast_id):
         return cast_info
     except Exception as e:
         return str(e)
+
 
 @app.get("/api/cast/{cast_id}")
 def get_cast_details(cast_id: int):
