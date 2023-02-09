@@ -2,12 +2,10 @@
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 import pickle
-import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from dotenv import load_dotenv
-import json
 import os
 import requests
 load_dotenv()
@@ -77,7 +75,7 @@ def get_recommended_movies(movie_name,number_of_recommended):
     except:
         raise Exception("Similarity Creating Got Failed")
     if movie_name not in data['movie_title'].unique():
-        return ('Sorry! The movie you requested is not in our database. Please check the spelling or try with some other movies')
+        return ('Sorry! Requested Movie Not in Our Database, Please check spelling.')
     else:
         # to get the exact movie
         i = data.loc[data['movie_title'] == movie_name].index[0]
