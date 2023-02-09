@@ -84,7 +84,7 @@ def get_recommended_movies(movie_name,number_of_recommended):
             similarity_score, key=lambda x: x[1], reverse=True)
         # excluding first item since it is the requested movie itself
         # second range will give you the number of movies.
-        sorted_similarity_movies = sorted_similarity_movies[1:number_of_recommended]
+        sorted_similarity_movies = sorted_similarity_movies[1:int(number_of_recommended)+1]
         titles = []
         for i in range(len(sorted_similarity_movies)):
             a = sorted_similarity_movies[i][0]
@@ -161,12 +161,12 @@ def get_movies(movie_id):
         return str(e)
     
 
-@app.get("/api/movie/{movie_id}")
-def get_movie_details(movie_id: int):
+@app.get("/api/movie/{movie_id}/{recommend_count}")
+def get_movie_details(movie_id: int, recommend_count : int):
     try:
         movie_details = get_movies(movie_id)
         cast_details = get_movie_cast(movie_id)
-        number_of_recommended_movies = 20
+        number_of_recommended_movies = recommend_count
         recommended_movies = get_recommended_movies(movie_details['movie_title'],number_of_recommended_movies)
         recommended_movies = [get_title(name) for name in recommended_movies]
         recommended_movies = [get_movies(movie_id['id']) for movie_id in recommended_movies]
