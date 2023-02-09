@@ -42,7 +42,7 @@ def s3_updated_dataset():
     return data
 
 
-def get_details(movie_title):
+def get_title(movie_title):
     try:
         data = {}
         url = f"https://api.themoviedb.org/3/search/movie?api_key={TMBD_API_KEY}&query={movie_title}"
@@ -96,11 +96,11 @@ async def get_movie_name(movie_details: Request):
     try:
         collected_data = await movie_details.json()
         movie_title = collected_data['movie_title']
-        movie_exist = get_details(movie_title)
+        get_title = get_title(movie_title)
         return {
             "status": status.HTTP_200_OK,
             "results": {
-                "searched_movie": movie_exist,
+                "searched_movie": get_title,
             }
         }
     except Exception as e:
@@ -136,9 +136,7 @@ def get_movie_cast(movie_id):
     except Exception as e:
         return str(e)
     
-
-@app.get("/api/movie/{movie_id}")
-def get_movie_details(movie_id: int):
+def get_movies(movie_id):
     try:
         url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={TMBD_API_KEY}"
         response = requests.get(url)
@@ -146,22 +144,45 @@ def get_movie_details(movie_id: int):
         poster_url = f"https://image.tmdb.org/t/p/original{movie_details['poster_path']}"
         genres_list = ", ".join([data['name'] for data in movie_details['genres']])
         runtime = get_runtime(movie_details['runtime'])
+        return {
+            "movie_id" : movie_id,
+            "movie_title" : movie_details['original_title'],
+            "imdb_id" : movie_details['imdb_id'],
+            "poster" : poster_url,
+            "overview" : movie_details['overview'],
+            "genres" :  genres_list,
+            "rating" : movie_details['vote_average'],
+            "vote_count" : movie_details['vote_count'],
+            "release_date" : movie_details['release_date'],
+            "runtime" : runtime,
+            "status" : movie_details['status'],
+        }
+    except Exception as e:
+        return str(e)
+    
+
+@app.get("/api/movie/{movie_id}")
+def get_movie_details(movie_id: int):
+    try:
+        movie_details = get_movies(movie_id)
         cast_details = get_movie_cast(movie_id)
         number_of_recommended_movies = 20
-        recommended_movies = get_recommended_movies(movie_details['original_title'],number_of_recommended_movies)
+        recommended_movies = get_recommended_movies(movie_details['movie_title'],number_of_recommended_movies)
+        recommended_movies = [get_title(name) for name in recommended_movies]
+        recommended_movies = [get_movies(movie_id['id']) for movie_id in recommended_movies]
         return {
             "status": status.HTTP_200_OK,
             "results": {
                 "movie_id" : movie_id,
-                "movie_title" : movie_details['original_title'],
+                "movie_title" : movie_details['movie_title'],
                 "imdb_id" : movie_details['imdb_id'],
-                "poster" : poster_url,
+                "poster" : movie_details['poster'],
                 "overview" : movie_details['overview'],
-                "genres" :  genres_list,
-                "rating" : movie_details['vote_average'],
+                "genres" :  movie_details['genres'],
+                "rating" : movie_details['rating'],
                 "vote_count" : movie_details['vote_count'],
                 "release_date" : movie_details['release_date'],
-                "runtime" : runtime,
+                "runtime" : movie_details['runtime'],
                 "status" : movie_details['status'],
                 "cast_details" : cast_details,
                 "recommended_movies" : recommended_movies
