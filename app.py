@@ -69,13 +69,13 @@ def create_similarity():
     return data, similarity
 
 
-def get_recommended_movies(movie_name):
+def get_recommended_movies(movie_name,number_of_recommended):
     movie_name = movie_name.lower()
     try:
-        data.head()
-        similarity.shape
-    except:
+        # train the model and get latest similarities 
         data, similarity = create_similarity()
+    except:
+        raise Exception("Similarity Creating Got Failed")
     if movie_name not in data['movie_title'].unique():
         return ('Sorry! The movie you requested is not in our database. Please check the spelling or try with some other movies')
     else:
@@ -85,18 +85,13 @@ def get_recommended_movies(movie_name):
         sorted_similarity_movies = sorted(
             similarity_score, key=lambda x: x[1], reverse=True)
         # excluding first item since it is the requested movie itself
-        sorted_similarity_movies = sorted_similarity_movies[1:11]
+        # second range will give you the number of movies.
+        sorted_similarity_movies = sorted_similarity_movies[1:number_of_recommended]
         titles = []
         for i in range(len(sorted_similarity_movies)):
             a = sorted_similarity_movies[i][0]
             titles.append(data['movie_title'][a])
         return titles
-
-
-def similar_movies(title):
-    similar_movies = get_recommended_movies(title)
-    return similar_movies
-
 
 @app.post("/api/movie")
 async def get_movie_name(movie_details: Request):
@@ -154,6 +149,8 @@ def get_movie_details(movie_id: int):
         genres_list = ", ".join([data['name'] for data in movie_details['genres']])
         runtime = get_runtime(movie_details['runtime'])
         cast_details = get_movie_cast(movie_id)
+        number_of_recommended_movies = 20
+        recommended_movies = get_recommended_movies(movie_details['original_title'],number_of_recommended_movies)
         return {
             "status": status.HTTP_200_OK,
             "results": {
@@ -169,6 +166,7 @@ def get_movie_details(movie_id: int):
                 "runtime" : runtime,
                 "status" : movie_details['status'],
                 "cast_details" : cast_details,
+                "recommended_movies" : recommended_movies
             }
         }
     except Exception as e:

@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import os
 import requests
+import bs4 as bs
+import urllib.request
 from S3_Uploader import Trigger_Uploader
 from datetime import datetime
 from dotenv import load_dotenv
@@ -147,13 +149,14 @@ def wikipedia_data_scrapper(country, year):
         2. Merging all the tables that we have extracted from wikipedia
     """
     link = f"https://en.wikipedia.org/wiki/List_of_{country.capitalize()}_films_of_{year}"
-    df1 = pd.read_html(link, header=0)[2]
-    df2 = pd.read_html(link, header=0)[3]
-    df3 = pd.read_html(link, header=0)[4]
-    df4 = pd.read_html(link, header=0)[5]
-    df4 = pd.read_html(link, header=0)[6]
-    df = df1.append(df2.append(df3.append(df4, ignore_index=True),
-                    ignore_index=True), ignore_index=True)
+    source = urllib.request.urlopen(link).read()
+    soup = bs.BeautifulSoup(source,'lxml')
+    tables = soup.find_all('table',class_='wikitable sortable')
+    df1 = pd.read_html(str(tables[0]))[0]
+    df2 = pd.read_html(str(tables[1]))[0]
+    df3 = pd.read_html(str(tables[2]))[0]
+    df4 = pd.read_html(str(tables[3]).replace("'1\"\'",'"1"'))[0] # avoided "ValueError: invalid literal for int() with base 10: '1"'
+    df = df1.append(df2.append(df3.append(df4,ignore_index=True),ignore_index=True),ignore_index=True)
     return df
 
 
