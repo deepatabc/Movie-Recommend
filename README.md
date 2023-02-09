@@ -21,3 +21,9 @@ pip install wheel
 ```
 pip3 install -r requirements.txt
 ```
+
+3. To Run The Application
+
+```
+uvicorn app:app --reload
+```
