@@ -1,6 +1,6 @@
 # Movie Recommendation Live DataSet
 
-### DataSet Collection From S3 and Updating
+### DataSet Collection From S3 and Updating, Training, Recommend Movies
 
 ### Prerequisites <a name = "prerequisites"></a>
 
