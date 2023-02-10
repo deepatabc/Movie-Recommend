@@ -95,28 +95,32 @@ def get_recommended_movies(movie_name, number_of_recommended):
             a = sorted_similarity_movies[i][0]
             titles.append(data['movie_title'][a])
         return titles
-    
+
+
 def get_movie_reviews(imdb_id):
-    scrapped_reviews = urllib.request.urlopen(f"https://www.imdb.com/title/{imdb_id}/reviews?ref_=tt_ov_rt")
-    extracted_reviews = bs.BeautifulSoup(scrapped_reviews,'lxml')
-    all_reviews = extracted_reviews.find_all("div",{"class":"text show-more__control"})
+    scrapped_reviews = urllib.request.urlopen(
+        f"https://www.imdb.com/title/{imdb_id}/reviews?ref_=tt_ov_rt")
+    extracted_reviews = bs.BeautifulSoup(scrapped_reviews, 'lxml')
+    all_reviews = extracted_reviews.find_all(
+        "div", {"class": "text show-more__control"})
     reviews = []
     status = []
     for review in all_reviews:
         if review.text:
+            # here using regex to avoid invalid symbols in the string.
             reviews.append(re.sub(r'[^\w]', ' ', review.text))
             # converting into numpy array
             numpy_array = np.array([review.text])
-            # transforming the np array 
+            # transforming the np array
             vectorized = vectorizer.transform(numpy_array)
             # predicting the result using the sentimental analysis trained model.
             result = classifier.predict(vectorized)
             # predicted results 0 represent Average, 1 represent Great
             status.append('Great' if result else 'Average')
     # combining both review and status
-    combined = [{"review" : review,"status" : status} for review, status in zip(reviews, status)]
+    combined = [{"review": review, "status": status}
+                for review, status in zip(reviews, status)]
     return combined
-    
 
 
 @app.post("/api/movie")
@@ -220,7 +224,7 @@ def get_movie_details(movie_id: int, recommend_count: int):
                 "release_date": movie_details['release_date'],
                 "runtime": movie_details['runtime'],
                 "status": movie_details['status'],
-                "reviews" : reviews,
+                "reviews": reviews,
                 "cast_details": cast_details,
                 "recommended_movies": recommended_movies
             }
