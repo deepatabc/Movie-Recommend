@@ -10,6 +10,8 @@ import os
 import requests
 import bs4 as bs
 import urllib.request
+import numpy as np
+import re
 load_dotenv()
 
 ###################################### Configurations #############################################
@@ -99,11 +101,21 @@ def get_movie_reviews(imdb_id):
     extracted_reviews = bs.BeautifulSoup(scrapped_reviews,'lxml')
     all_reviews = extracted_reviews.find_all("div",{"class":"text show-more__control"})
     reviews = []
+    status = []
     for review in all_reviews:
         if review.text:
-            reviews.append(review.text)
-    print(reviews)
-    return reviews
+            reviews.append(re.sub(r'[^\w]', ' ', review.text))
+            # converting into numpy array
+            numpy_array = np.array([review.text])
+            # transforming the np array 
+            vectorized = vectorizer.transform(numpy_array)
+            # predicting the result using the sentimental analysis trained model.
+            result = classifier.predict(vectorized)
+            # predicted results 0 represent Average, 1 represent Great
+            status.append('Great' if result else 'Average')
+    # combining both review and status
+    combined = [{"review" : review,"status" : status} for review, status in zip(reviews, status)]
+    return combined
     
 
 
@@ -208,6 +220,7 @@ def get_movie_details(movie_id: int, recommend_count: int):
                 "release_date": movie_details['release_date'],
                 "runtime": movie_details['runtime'],
                 "status": movie_details['status'],
+                "reviews" : reviews,
                 "cast_details": cast_details,
                 "recommended_movies": recommended_movies
             }
