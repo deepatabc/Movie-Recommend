@@ -123,23 +123,21 @@ def get_movie_reviews(imdb_id):
     return combined
 
 
-@app.post("/api/movie")
-async def get_movie_name(movie_details: Request):
+def get_individual_cast(cast_id):
     try:
-        collected_data = await movie_details.json()
-        movie_title = collected_data['movie_title']
-        get_title = get_title(movie_title)
-        return {
-            "status": status.HTTP_200_OK,
-            "results": {
-                "searched_movie": get_title,
-            }
-        }
+        cast_info = {}
+        url = f"https://api.themoviedb.org/3/person/{cast_id}?api_key={TMBD_API_KEY}"
+        response = requests.get(url)
+        cast_details = response.json()
+        cast_info['name'] = cast_details['name']
+        cast_info['biography'] = cast_details['biography']
+        cast_info['birthday'] = cast_details['birthday']
+        cast_info['known_for_department'] = cast_details['known_for_department']
+        cast_info['place_of_birth'] = cast_details['place_of_birth']
+        cast_info['profile_url'] = f"https://image.tmdb.org/t/p/original{cast_details['profile_path']}"
+        return cast_info
     except Exception as e:
-        return {
-            "status": status.HTTP_404_NOT_FOUND,
-            'message': str(e)
-        }
+        return str(e)
 
 
 def get_runtime(runtime):
@@ -198,7 +196,25 @@ def get_movies(movie_id):
         return str(e)
 
 
-@app.get("/api/movie/{movie_id}/{recommend_count}")
+@app.post("/api/title")
+async def get_movie_name(movie_details: Request):
+    try:
+        collected_data = await movie_details.json()
+        movie_title = collected_data['movie_title']
+        title = get_title(movie_title)
+        return {
+            "status": status.HTTP_200_OK,
+            "results": {
+                "searched_movie": title,
+            }
+        }
+    except Exception as e:
+        return {
+            "status": status.HTTP_404_NOT_FOUND,
+            'message': str(e)
+        }
+
+@app.get("/api/movie/")
 def get_movie_details(movie_id: int, recommend_count: int):
     try:
         movie_details = get_movies(movie_id)
@@ -235,25 +251,7 @@ def get_movie_details(movie_id: int, recommend_count: int):
             'message': str(e)
         }
 
-
-def get_individual_cast(cast_id):
-    try:
-        cast_info = {}
-        url = f"https://api.themoviedb.org/3/person/{cast_id}?api_key={TMBD_API_KEY}"
-        response = requests.get(url)
-        cast_details = response.json()
-        cast_info['name'] = cast_details['name']
-        cast_info['biography'] = cast_details['biography']
-        cast_info['birthday'] = cast_details['birthday']
-        cast_info['known_for_department'] = cast_details['known_for_department']
-        cast_info['place_of_birth'] = cast_details['place_of_birth']
-        cast_info['profile_url'] = f"https://image.tmdb.org/t/p/original{cast_details['profile_path']}"
-        return cast_info
-    except Exception as e:
-        return str(e)
-
-
-@app.get("/api/cast/{cast_id}")
+@app.get("/api/cast/")
 def get_cast_details(cast_id: int):
     try:
         cast_info = get_individual_cast(cast_id)
