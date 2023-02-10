@@ -27,3 +27,5 @@ pip3 install -r requirements.txt
 ```
 uvicorn app:app --reload
 ```
+
+#### API Documentation Posted URL : [Attached_URL](https://documenter.getpostman.com/view/25789265/2s935sogwi)
