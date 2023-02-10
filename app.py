@@ -8,6 +8,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 from dotenv import load_dotenv
 import os
 import requests
+import bs4 as bs
+import urllib.request
 load_dotenv()
 
 ###################################### Configurations #############################################
@@ -91,6 +93,18 @@ def get_recommended_movies(movie_name, number_of_recommended):
             a = sorted_similarity_movies[i][0]
             titles.append(data['movie_title'][a])
         return titles
+    
+def get_movie_reviews(imdb_id):
+    scrapped_reviews = urllib.request.urlopen(f"https://www.imdb.com/title/{imdb_id}/reviews?ref_=tt_ov_rt")
+    extracted_reviews = bs.BeautifulSoup(scrapped_reviews,'lxml')
+    all_reviews = extracted_reviews.find_all("div",{"class":"text show-more__control"})
+    reviews = []
+    for review in all_reviews:
+        if review.text:
+            reviews.append(review.text)
+    print(reviews)
+    return reviews
+    
 
 
 @app.post("/api/movie")
@@ -172,6 +186,7 @@ def get_movies(movie_id):
 def get_movie_details(movie_id: int, recommend_count: int):
     try:
         movie_details = get_movies(movie_id)
+        reviews = get_movie_reviews(movie_details['imdb_id'])
         cast_details = get_movie_cast(movie_id)
         number_of_recommended_movies = recommend_count
         recommended_movies = get_recommended_movies(
