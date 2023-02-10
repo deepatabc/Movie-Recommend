@@ -47,6 +47,11 @@ def s3_updated_dataset():
 
 
 def get_title(movie_title):
+    """
+        1. Here Taking Movie Title and passing it to the tmdb url
+        2. collecting information
+        3. return dict of data contain movie_id and title.
+    """
     try:
         data = {}
         url = f"https://api.themoviedb.org/3/search/movie?api_key={TMBD_API_KEY}&query={movie_title}"
@@ -60,44 +65,60 @@ def get_title(movie_title):
 
 
 def create_similarity():
-    # taking the latest data and training each time.
+    """
+        1. Calling S3 updated Dataset
+        2. Convert a collection of text documents to a matrix of token counts,taking text from movie combined column 
+        3. Creating a similarity score matrix
+        4. returning latest dataset, similarity score.
+    """
     data = s3_updated_dataset()
-    # Convert a collection of text documents to a matrix of token counts
     cv = CountVectorizer()
-    # taking the field of combined data's
     count_matrix = cv.fit_transform(data['comb'])
-    # creating a similarity score matrix
     similarity = cosine_similarity(count_matrix)
     return data, similarity
 
 
 def get_recommended_movies(movie_name, number_of_recommended):
+    """
+        1. Taking Movie Title, Number of recommended Movies count.
+        2. Collecting Latest dataset, newly trained similarity score. 
+        3. Checking name of the movie that we have passed and the dataset contain same movie or not.
+        4. Given Movie Similar Score taking.
+        5. Sorting The Similar Movies.
+        6. excluding first Movie Name since it is the requested movie itself.
+        7. Similar Movie Name's collecting from the dataset and returning.
+    """
     movie_name = movie_name.lower()
     try:
-        # train the model and get latest similarities
         data, similarity = create_similarity()
     except:
         raise Exception("Similarity Creating Got Failed")
     if movie_name not in data['movie_title'].unique():
         return ('Sorry! Requested Movie Not in Our Database, Please check spelling.')
     else:
-        # to get the exact movie
         i = data.loc[data['movie_title'] == movie_name].index[0]
-        similarity_score = list(enumerate(similarity[i]))  # similarity taking
-        sorted_similarity_movies = sorted(
+        similarity_score = list(enumerate(similarity[i]))
+        sorted_similar_movies = sorted(
             similarity_score, key=lambda x: x[1], reverse=True)
-        # excluding first item since it is the requested movie itself
-        # second range will give you the number of movies.
-        sorted_similarity_movies = sorted_similarity_movies[1:int(
+        similar_movies = sorted_similar_movies[1:int(
             number_of_recommended)+1]
         titles = []
-        for i in range(len(sorted_similarity_movies)):
-            a = sorted_similarity_movies[i][0]
+        for i in range(len(similar_movies)):
+            a = similar_movies[i][0]
             titles.append(data['movie_title'][a])
         return titles
 
 
 def get_movie_reviews(imdb_id):
+    """
+        1. Scrapping Movie Reviews from IMDB.
+        2. Extracted reviews regex removing (to avoid invalid symbols in the string)
+        3. Converting Review text to Numpy Array For Training (you should use 2d Array)
+        4. Transforming the np array to vectorizer (get some distinct features out of the text for the model to train)
+        5. Using NLP(sentimental analysis) to predict the result using the trained model.
+        6. Status will give you based on the predict result (0 represent Average, 1 represent Great)
+        7. Function will return combined data (review,status)
+    """
     scrapped_reviews = urllib.request.urlopen(
         f"https://www.imdb.com/title/{imdb_id}/reviews?ref_=tt_ov_rt")
     extracted_reviews = bs.BeautifulSoup(scrapped_reviews, 'lxml')
@@ -107,23 +128,21 @@ def get_movie_reviews(imdb_id):
     status = []
     for review in all_reviews:
         if review.text:
-            # here using regex to avoid invalid symbols in the string.
             reviews.append(re.sub(r'[^\w]', ' ', review.text))
-            # converting into numpy array
             numpy_array = np.array([review.text])
-            # transforming the np array
             vectorized = vectorizer.transform(numpy_array)
-            # predicting the result using the sentimental analysis trained model.
             result = classifier.predict(vectorized)
-            # predicted results 0 represent Average, 1 represent Great
             status.append('Great' if result else 'Average')
-    # combining both review and status
     combined = [{"review": review, "status": status}
                 for review, status in zip(reviews, status)]
     return combined
 
 
 def get_individual_cast(cast_id):
+    """
+        1. Taking Cast_ID and pass to TMDB api to collect info (Individual Cast Details).
+        2. return required Fields (name,biography,birthday,known_for_department,place_of_birth,profile_pic url)
+    """
     try:
         cast_info = {}
         url = f"https://api.themoviedb.org/3/person/{cast_id}?api_key={TMBD_API_KEY}"
@@ -151,6 +170,11 @@ def get_runtime(runtime):
 
 
 def get_movie_cast(movie_id):
+    """
+        1. This Function is Taking movie_id and passing to TMDB api.
+        2. Collecting Information.
+        3. return Only Actor's who have score more than 5. 
+    """
     try:
         cast_info = []
         url = f"https://api.themoviedb.org/3/movie/{movie_id}/credits?api_key={TMBD_API_KEY}"
@@ -171,6 +195,12 @@ def get_movie_cast(movie_id):
 
 
 def get_movies(movie_id):
+    """
+        1. Taking Movie_id and passing it to TMDB api.
+        2. collecting Info.
+        3. Calculating Movie Runtime into Hours format.
+        4. returning all the required fields as a dict.
+    """
     try:
         url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={TMBD_API_KEY}"
         response = requests.get(url)
@@ -214,6 +244,7 @@ async def get_movie_name(movie_details: Request):
             'message': str(e)
         }
 
+
 @app.get("/api/movie/")
 def get_movie_details(movie_id: int, recommend_count: int):
     try:
@@ -250,6 +281,7 @@ def get_movie_details(movie_id: int, recommend_count: int):
             "status": status.HTTP_404_NOT_FOUND,
             'message': str(e)
         }
+
 
 @app.get("/api/cast/")
 def get_cast_details(cast_id: int):
