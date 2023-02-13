@@ -42,7 +42,7 @@ vectorizer = pickle.load(open(file_path+transformed_model, 'rb'))
 
 def s3_updated_dataset():
     data = pd.read_csv(
-        'https://movie-dataset-live.s3.ap-south-1.amazonaws.com/PreparedData/UpdatedDataSet.csv')
+        'https://movie-dataset-keeper.s3.us-east-2.amazonaws.com/PreparedData/UpdatedDataSet.csv')
     return data
 
 
