@@ -11,7 +11,6 @@ import requests
 import bs4 as bs
 import urllib.request
 import numpy as np
-import uvicorn
 import re
 load_dotenv()
 
@@ -298,6 +297,3 @@ def get_cast_details(cast_id: int):
             'message': str(e)
         }
 
-
-if __name__ == "__main__":
-    uvicorn.run("app:app", host="127.0.0.1", port=8000, log_level="info")
