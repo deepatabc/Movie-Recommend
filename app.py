@@ -259,22 +259,20 @@ def get_movie_details(movie_id: int, recommend_count: int):
                               for movie_id in recommended_movies]
         return {
             "status": status.HTTP_200_OK,
-            "results": {
-                "movie_id": movie_id,
-                "movie_title": movie_details['movie_title'],
-                "imdb_id": movie_details['imdb_id'],
-                "poster": movie_details['poster'],
-                "overview": movie_details['overview'],
-                "genres":  movie_details['genres'],
-                "rating": movie_details['rating'],
-                "vote_count": movie_details['vote_count'],
-                "release_date": movie_details['release_date'],
-                "runtime": movie_details['runtime'],
-                "status": movie_details['status'],
-                "reviews": reviews,
-                "cast_details": cast_details,
-                "recommended_movies": recommended_movies
-            }
+            "movie_id": movie_id,
+            "movie_title": movie_details['movie_title'],
+            "imdb_id": movie_details['imdb_id'],
+            "poster": movie_details['poster'],
+            "overview": movie_details['overview'],
+            "genres":  movie_details['genres'],
+            "rating": movie_details['rating'],
+            "vote_count": movie_details['vote_count'],
+            "release_date": movie_details['release_date'],
+            "runtime": movie_details['runtime'],
+            "status": movie_details['status'],
+            "reviews": reviews,
+            "cast_details": cast_details,
+            "recommended_movies": recommended_movies
         }
     except Exception as e:
         return {
