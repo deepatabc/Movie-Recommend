@@ -258,7 +258,6 @@ def get_movie_details(movie_id: int, recommend_count: int):
         recommended_movies = [get_movies(movie_id['id'])
                               for movie_id in recommended_movies]
         return {
-            "status": status.HTTP_200_OK,
             "movie_id": movie_id,
             "movie_title": movie_details['movie_title'],
             "imdb_id": movie_details['imdb_id'],
